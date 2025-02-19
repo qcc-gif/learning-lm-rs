@@ -71,36 +71,36 @@ pub fn masked_softmax(y: &mut Tensor<f32>) {
 }
 
 pub fn rms_norm(y: &mut Tensor<f32>, x: &Tensor<f32>, w: &Tensor<f32>, epsilon: f32) {
-    let shape=x.shape();
-    let last_dim=shape.last().unwrap();//取最后一维大小
-    let outer_dims=shape.iter().take(shape.len()-1).product::<usize>();//计算前面所有维度的乘积
+    // let shape=x.shape();
+    // let last_dim=shape.last().unwrap();//取最后一维大小
+    // let outer_dims=shape.iter().take(shape.len()-1).product::<usize>();//计算前面所有维度的乘积
 
-    assert!(y.shape() == shape);
-    assert!(*w.shape() == vec![last_dim], "w 的 shape 必须是 [hidden_dim]");
+    // assert!(y.shape() == shape);
+    // assert!(*w.shape() == vec![last_dim], "w 的 shape 必须是 [hidden_dim]");
 
-    let __y = unsafe { y.data_mut() };
-    let __x = unsafe { x.data() };
-    let __w = unsafe { w.data() };
+    // let __y = unsafe { y.data_mut() };
+    // let __x = unsafe { x.data() };
+    // let __w = unsafe { w.data() };
 
-    for batch_index in 0..outer_dims {
-        let start = batch_index * last_dim; // 计算起始索引
-        let end = start + last_dim;
+    // for batch_index in 0..outer_dims {
+    //     let start = batch_index * last_dim; // 计算起始索引
+    //     let end = start + last_dim;
 
-        let mut res: f32 = 0.0;
+    //     let mut res: f32 = 0.0;
         
-        // 计算当前 `[batch, seq_len]` 位置的 RMS
-        for i in start..end {
-            let x_i = __x[i];
-            res += x_i * x_i;
-        }
-        res /= *last_dim as f32;
-        let rms = (res + epsilon).sqrt();
+    //     // 计算当前 `[batch, seq_len]` 位置的 RMS
+    //     for i in start..end {
+    //         let x_i = __x[i];
+    //         res += x_i * x_i;
+    //     }
+    //     res /= *last_dim as f32;
+    //     let rms = (res + epsilon).sqrt();
 
-        // 归一化最后一维并乘以 `w`
-        for i in start..end {
-            __y[i] = __w[i - start] * __x[i] / rms;
-        }
-    }
+    //     // 归一化最后一维并乘以 `w`
+    //     for i in start..end {
+    //         __y[i] = __w[i - start] * __x[i] / rms;
+    //     }
+    // }
 
 
 }
