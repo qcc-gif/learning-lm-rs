@@ -71,19 +71,56 @@ pub fn masked_softmax(y: &mut Tensor<f32>) {
 }
 
 pub fn rms_norm(y: &mut Tensor<f32>, x: &Tensor<f32>, w: &Tensor<f32>, epsilon: f32) {
-    todo!("实现 rms_norm，计算前做一些必要的检查会帮助你后续调试")
+    let shape=x.shape();
+    let last_dim=shape.last().unwrap();//取最后一维大小
+    let outer_dims=shape.iter().take(shape.len()-1).product::<usize>();//计算前面所有维度的乘积
+
+    assert!(y.shape() == shape);
+    assert!(*w.shape() == vec![last_dim], "w 的 shape 必须是 [hidden_dim]");
+
+    let __y = unsafe { y.data_mut() };
+    let __x = unsafe { x.data() };
+    let __w = unsafe { w.data() };
+
+    for batch_index in 0..outer_dims {
+        let start = batch_index * last_dim; // 计算起始索引
+        let end = start + last_dim;
+
+        let mut res: f32 = 0.0;
+        
+        // 计算当前 `[batch, seq_len]` 位置的 RMS
+        for i in start..end {
+            let x_i = __x[i];
+            res += x_i * x_i;
+        }
+        res /= *last_dim as f32;
+        let rms = (res + epsilon).sqrt();
+
+        // 归一化最后一维并乘以 `w`
+        for i in start..end {
+            __y[i] = __w[i - start] * __x[i] / rms;
+        }
+    }
+
+
 }
 
 // y = silu(x) * y
 // hint: this is an element-wise operation
 pub fn swiglu(y: &mut Tensor<f32>, x: &Tensor<f32>) {
-    // let len = y.size();
-    // assert!(len == x.size());
+    let len = y.size();
+    assert!(len == x.size());
 
-    // let _y = unsafe { y.data_mut() };
-    // let _x = x.data();
+    let _y = unsafe { y.data_mut() }; //获取y的可变数据
+    let _x = x.data(); //获取x的数据
 
-    todo!("实现 silu，这里给了一些前期准备工作的提示，你可以参考")
+    //silu(x)=sigmoid(x)*x sigmoid(x)=1/(1+exp(-x))
+    for i in 0..len {
+        let x_i = _x[i];
+        let sigmoid_x_i = 1.0 / (1.0 + (-x_i).exp());
+        let silu_x_i=sigmoid_x_i*x_i;
+        _y[i] *= silu_x_i;
+    }
 }
 
 // C = beta * C + alpha * A @ B^T
